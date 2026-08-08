@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Asosiasi Huruf Angka Gambar</title>
+    <style>
+        :root { --accent: #4cc9f0; --bg: #1f1f2e; --card: #ffffff; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: #333; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 15px; box-sizing: border-box; }
+        .container { background: var(--card); padding: 25px; border-radius: 25px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        /* Layar Transisi */
+        .screen { display: none; }
+        .screen.active { display: block; }
+        
+        .title { font-size: 1.8rem; font-weight: bold; color: #4361ee; margin-bottom: 5px; }
+        .subtitle { color: #666; font-size: 0.95rem; margin-bottom: 20px; }
+        
+        .guide-box { background: #f8f9fa; border-radius: 15px; padding: 15px; text-align: left; font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px; border: 2px solid #e9ecef; }
+        .guide-box ul { padding-left: 20px; margin: 5px 0; }
+        
+        /* Header Game */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .level-badge { background: #4361ee; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; }
+        .timer-badge { background: #e76f51; color: white; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; }
+        
+        .image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+        .image-box { background: #f1f2f6; border-radius: 15px; font-size: 2.2rem; padding: 15px; border: 3px solid #dfe4ea; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #2f3542; }
+        
+        .hint-text { background: #fff3cd; color: #856404; padding: 10px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 15px; display: none; border: 1px solid #ffeeba; }
+        
+        input { width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 12px; font-size: 1.1rem; box-sizing: border-box; text-align: center; margin-bottom: 12px; outline: none; text-transform: uppercase; }
+        input:focus { border-color: #4361ee; }
+        
+        .btn-primary { width: 100%; padding: 14px; background: #4361ee; color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 1.05rem; cursor: pointer; transition: 0.2s; margin-bottom: 8px; }
+        .btn-primary:hover { background: #3a56d4; }
+        .btn-secondary { background: #e9ecef; color: #495057; }
+        .btn-secondary:hover { background: #dde2e6; }
+        
+        #message { margin-top: 10px; font-weight: bold; font-size: 1rem; height: 1.5em; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- 1. LAYAR JUDUL UTAMA -->
+    <div id="screen-title" class="screen active">
+        <div class="title">🧠 Asosiasi Huruf Angka Gambar</div>
+        <div class="subtitle">Uji Ketajaman Logika & Kecepatan Berpikir</div>
+        <div style="font-size: 4rem; margin: 20px 0;">🎮</div>
+        <button class="btn-primary" onclick="goToGuide()">START</button>
+    </div>
+
+    <!-- 2. LAYAR PANDUAN (MUNCUL SETELAH KLIK START) -->
+    <div id="screen-guide" class="screen">
+        <div class="title">📖 Panduan Bermain</div>
+        <div class="guide-box">
+            <ul>
+                <li>Amati <strong>4 kotak</strong> yang berisi gabungan gambar, angka, atau huruf.</li>
+                <li>Temukan <strong>1 kata penghubung</strong> (benang merah) dari kotak-kotak tersebut.</li>
+                <li><strong>Waktu Terbatas!</strong> Kamu harus menjawab sebelum waktu habis (15 detik).</li>
+                <li>Jika waktu habis atau jawaban salah, kamu harus <strong>mengulang level ini dari awal</strong>!</li>
+            </ul>
+        </div>
+        <button class="btn-primary" onclick="startActualGame()">MENGERTI & LANJUT</button>
+    </div>
+
+    <!-- 3. ARENA GAME UTAMA -->
+    <div id="screen-game" class="screen">
+        <div class="header">
+            <div class="level-badge" id="levelInfo">Level 1</div>
+            <div class="timer-badge" id="timerInfo">⏱️ 15s</div>
+        </div>
+        
+        <div class="image-grid" id="imageGrid">
+            <div class="image-box" id="img1">🍎</div>
+            <div class="image-box" id="img2">🍌</div>
+            <div class="image-box" id="img3">🍇</div>
+            <div class="image-box" id="img4">🍊</div>
+        </div>
+
+        <div class="hint-text" id="hintBox"></div>
+        
+        <input type="text" id="answer" placeholder="Ketik jawaban..." autocomplete="off">
+        <button class="btn-primary" onclick="checkAnswer()">JAWAB</button>
+        <button class="btn-primary btn-secondary" onclick="showHint()" id="btnHint">LIHAT BANTUAN 💡</button>
+        
+        <div id="message"></div>
+    </div>
+
+</div>
+
+<script>
+    // Database Soal Asosiasi (Gambar, Angka, dan Huruf)
+    const baseQuizData = [
+        { items: ["🍎", "🍌", "🍇", "🍊"], ans: "BUAH", hint: "Sering ditemukan di keranjang piknik." },
+        { items: ["1️⃣", "2️⃣", "3️⃣", "4️⃣"], ans: "ANGKA", hint: "Simbol matematis dasar urutan." },
+        { items: ["A", "B", "C", "D"], ans: "HURUF", hint: "Elemen dasar untuk menyusun kata." },
+        { items: ["⚽", "🏀", "🎾", "🏐"], ans: "BOLA", hint: "Objek bundar untuk berolahraga." },
+        { items: ["🗝️", "🚪", "🔒", "🔑"], ans: "KUNCI", hint: "Alat untuk mengamankan atau membuka akses." },
+        { items: ["10", "20", "30", "40"], ans: "PULUHAN", hint: "Kelipatan angka sepuluh." },
+        { items: ["A-1", "B-2", "C-3", "D-4"], ans: "URUTAN", hint: "Sistem pencatatan berbasis abjad dan nomor." },
+        { items: ["🔥", "☀️", "🌋", "🌶️"], ans: "PANAS", hint: "Suhu tinggi yang membara." },
+        { items: ["X", "Y", "Z", "❓"], ans: "VARIABEL", hint: "Lambang huruf pengganti nilai tak diketahui." },
+        { items: ["24", "7", "365", "60"], ans: "WAKTU", hint: "Jam, hari, tahun, dan detik." }
+    ];
+
+    // Generator 100 Level Otomatis
+    let quizData = [];
+    for (let i = 1; i <= 100; i++) {
+        let item = baseQuizData[(i - 1) % baseQuizData.length];
+        quizData.push({
+            lvl: i,
+            items: item.items,
+            ans: item.ans,
+            hint: `${item.hint} (Level ${i})`
+        });
+    }
+
+    let current = 0;
+    let timer;
+    let timeLeft = 15;
+
+    function switchScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    function goToGuide() {
+        switchScreen('screen-guide');
+    }
+
+    function startActualGame() {
+        switchScreen('screen-game');
+        loadLevel();
+    }
+
+    function loadLevel() {
+        clearInterval(timer);
+        timeLeft = 15; // Waktu 15 detik per level
+        updateTimerDisplay();
+
+        const d = quizData[current];
+        document.getElementById('levelInfo').innerText = `Level ${d.lvl}`;
+        document.getElementById('img1').innerText = d.items[0];
+        document.getElementById('img2').innerText = d.items[1];
+        document.getElementById('img3').innerText = d.items[2];
+        document.getElementById('img4').innerText = d.items[3];
+        
+        document.getElementById('answer').value = "";
+        document.getElementById('message').innerText = "";
+        document.getElementById('hintBox').style.display = 'none';
+        document.getElementById('btnHint').style.display = 'block';
+
+        // Mulai hitung mundur waktu
+        timer = setInterval(() => {
+            timeLeft--;
+            updateTimerDisplay();
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                handleTimeOut();
+            }
+        }, 1000);
+    }
+
+    function updateTimerDisplay() {
+        document.getElementById('timerInfo').innerText = `⏱️ ${timeLeft}s`;
+        if (timeLeft <= 5) {
+            document.getElementById('timerInfo').style.backgroundColor = "#d90429";
+        } else {
+            document.getElementById('timerInfo').style.backgroundColor = "#e76f51";
+        }
+    }
+
+    function handleTimeOut() {
+        document.getElementById('message').innerText = "Waktu Habis! Mengulang level ini. ⏳";
+        document.getElementById('message').style.color = "#d90429";
+        setTimeout(() => {
+            loadLevel(); // Muat ulang level yang sama
+        }, 1500);
+    }
+
+    function showHint() {
+        const d = quizData[current];
+        const hintBox = document.getElementById('hintBox');
+        hintBox.innerText = `💡 Petunjuk: ${d.hint}`;
+        hintBox.style.display = 'block';
+        document.getElementById('btnHint').style.display = 'none';
+    }
+
+    function checkAnswer() {
+        const val = document.getElementById('answer').value.trim().toUpperCase();
+        if (val === quizData[current].ans) {
+            clearInterval(timer); // Hentikan timer karena benar
+            document.getElementById('message').innerText = "Betul! Lanjut... 🎉";
+            document.getElementById('message').style.color = "#2a9d8f";
+            setTimeout(() => {
+                current++;
+                if (current < quizData.length) {
+                    loadLevel();
+                } else {
+                    document.querySelector('.container').innerHTML = `
+                        <div class="title">🏆 LUAR BIASA!</div>
+                        <p style="margin: 20px 0; font-size: 1.1rem;">Kamu menaklukkan 100 level tepat waktu!</p>
+                        <button class="btn-primary" onclick="location.reload()">MAIN LAGI</button>
+                    `;
+                }
+            }, 1200);
+        } else {
+            document.getElementById('message').innerText = "Jawaban Salah! Coba lagi. 🤔";
+            document.getElementById('message').style.color = "#e76f51";
+        }
+    }
+</script>
+
+</body>
+</html>
