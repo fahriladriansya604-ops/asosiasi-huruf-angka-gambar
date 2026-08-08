@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Master Asosiasi: Angka & Huruf</title>
+    <style>
+        :root { --accent: #4cc9f0; --bg: #2b2d42; --card: #ffffff; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: #333; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 15px; box-sizing: border-box; }
+        .container { background: var(--card); padding: 25px; border-radius: 25px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+        
+        #screen-guide { display: block; }
+        #screen-game { display: none; }
+        
+        .title { font-size: 1.8rem; font-weight: bold; color: #4361ee; margin-bottom: 10px; }
+        .guide-box { background: #f8f9fa; border-radius: 15px; padding: 15px; text-align: left; font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px; border: 2px solid #e9ecef; }
+        .guide-box ul { padding-left: 20px; margin: 5px 0; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .level-badge { background: #4361ee; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; }
+        .diff-badge { font-weight: bold; font-size: 0.9rem; }
+        
+        .image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+        .image-box { background: #f1f2f6; border-radius: 15px; font-size: 2.2rem; padding: 15px; border: 3px solid #dfe4ea; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #2f3542; }
+        
+        .hint-text { background: #fff3cd; color: #856404; padding: 10px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 15px; display: none; border: 1px solid #ffeeba; }
+        
+        input { width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 12px; font-size: 1.1rem; box-sizing: border-box; text-align: center; margin-bottom: 12px; outline: none; text-transform: uppercase; }
+        input:focus { border-color: #4361ee; }
+        
+        .btn-primary { width: 100%; padding: 14px; background: #4361ee; color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 1.05rem; cursor: pointer; transition: 0.2s; margin-bottom: 8px; }
+        .btn-primary:hover { background: #3a56d4; }
+        .btn-secondary { background: #e9ecef; color: #495057; }
+        .btn-secondary:hover { background: #dde2e6; }
+        
+        #message { margin-top: 10px; font-weight: bold; font-size: 1rem; height: 1.5em; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- PANDUAN AWAL -->
+    <div id="screen-guide">
+        <div class="title">🧠 Master Asosiasi</div>
+        <p style="color: #666; margin-bottom: 15px;">Tantangan Asosiasi Gambar, Angka & Huruf</p>
+        
+        <div class="guide-box">
+            <strong>Cara Bermain:</strong>
+            <ul>
+                <li>Amati <strong>4 kotak</strong> yang berisi kombinasi gambar, angka, atau huruf rahasia.</li>
+                <li>Pecahkan pola logika / hitungan / asosiasi katanya.</li>
+                <li>Level dibagi menjadi <strong>LOW</strong> (1-30), <strong>MEDIUM</strong> (31-70), dan <strong>HIGH</strong> (71-100).</li>
+                <li>Gunakan petunjuk jika menemui level angka/huruf yang sulit!</li>
+            </ul>
+        </div>
+        
+        <button class="btn-primary" onclick="startGame()">MULAI BERMAIN</button>
+    </div>
+
+    <!-- ARENA GAME -->
+    <div id="screen-game">
+        <div class="header">
+            <div class="level-badge" id="levelInfo">Level 1</div>
+            <div class="diff-badge" id="diffInfo" style="color:#2a9d8f">LOW</div>
+        </div>
+        
+        <div class="image-grid" id="imageGrid">
+            <div class="image-box" id="img1">🍎</div>
+            <div class="image-box" id="img2">🍌</div>
+            <div class="image-box" id="img3">🍇</div>
+            <div class="image-box" id="img4">🍊</div>
+        </div>
+
+        <div class="hint-text" id="hintBox"></div>
+        
+        <input type="text" id="answer" placeholder="Ketik jawaban..." autocomplete="off">
+        <button class="btn-primary" onclick="checkAnswer()">JAWAB</button>
+        <button class="btn-primary btn-secondary" onclick="showHint()" id="btnHint">LIHAT BANTUAN 💡</button>
+        
+        <div id="message"></div>
+    </div>
+
+</div>
+
+<script>
+    // Kumpulan master soal variasi gambar, angka, dan huruf
+    const baseQuizData = [
+        // Kategori Low (Asosiasi Umum)
+        { diff: "LOW", items: ["🍎", "🍌", "🍇", "🍊"], ans: "BUAH", hint: "Sering ditemukan di keranjang piknik." },
+        { diff: "LOW", items: ["1️⃣", "2️⃣", "3️⃣", "4️⃣"], ans: "ANGKA", hint: "Simbol matematis dasar urutan." },
+        { diff: "LOW", items: ["A", "B", "C", "D"], ans: "HURUF", hint: "Elemen dasar untuk menyusun kata." },
+        { diff: "LOW", items: ["⚽", "🏀", "🎾", "🏐"], ans: "BOLA", hint: "Objek bundar untuk berolahraga." },
+        
+        // Kategori Medium (Logika Angka & Gabungan Simbol)
+        { diff: "MEDIUM", items: ["🗝️", "🚪", "🔒", "🔑"], ans: "KUNCI", hint: "Alat untuk mengamankan atau membuka akses." },
+        { diff: "MEDIUM", items: ["10", "20", "30", "40"], ans: "PULUHAN", hint: "Kelipatan angka sepuluh." },
+        { diff: "MEDIUM", items: ["A-1", "B-2", "C-3", "D-4"], ans: "URUTAN", hint: "Sistem pencatatan berbasis abjad dan nomor." },
+        { diff: "MEDIUM", items: ["🔥", "☀️", "🌋", "🌶️"], ans: "PANAS", hint: "Suhu tinggi yang membara." },
+
+        // Kategori High (Teka-teki Asosiasi Kritis Angka & Huruf Rumit)
+        { diff: "HIGH", items: ["X", "Y", "Z", "❓"], ans: "VARIABEL", hint: "Lambang huruf pengganti nilai tak diketahui dalam matematika." },
+        { diff: "HIGH", items: ["24", "7", "365", "60"], ans: "WAKTU", hint: "Jam dalam sehari, hari dalam seminggu, hari dalam setahun, detik dalam menit." },
+        { diff: "HIGH", items: ["1", "1", "2", "3"], ans: "FIBONACCI", hint: "Deret angka terkenal hasil penjumlahan dua angka sebelumnya." },
+        { diff: "HIGH", items: ["A-Z", "0-9", "🔣", "🔤"], ans: "KARAKTER", hint: "Seluruh jenis simbol, huruf, dan angka dalam komputer." }
+    ];
+
+    // Generator Otomatis sampai 100 Level dengan variasi tingkat kesulitan
+    let quizData = [];
+    for (let i = 1; i <= 100; i++) {
+        let baseIndex = (i - 1) % baseQuizData.length;
+        let item = baseQuizData[baseIndex];
+        
+        let dynamicDiff = i <= 30 ? "LOW" : (i <= 70 ? "MEDIUM" : "HIGH");
+        
+        quizData.push({
+            lvl: i,
+            diff: dynamicDiff,
+            items: item.items,
+            ans: item.ans,
+            hint: `${item.hint} (Tantangan Level ${i})`
+        });
+    }
+
+    let current = 0;
+
+    function startGame() {
+        document.getElementById('screen-guide').style.display = 'none';
+        document.getElementById('screen-game').style.display = 'block';
+        loadLevel();
+    }
+
+    function loadLevel() {
+        const d = quizData[current];
+        document.getElementById('levelInfo').innerText = `Level ${d.lvl}`;
+        
+        let diffBadge = document.getElementById('diffInfo');
+        diffBadge.innerText = d.diff;
+        if(d.diff === "LOW") diffBadge.style.color = "#2a9d8f";
+        else if(d.diff === "MEDIUM") diffBadge.style.color = "#e9c46a";
+        else diffBadge.style.color = "#e76f51";
+
+        document.getElementById('img1').innerText = d.items[0];
+        document.getElementById('img2').innerText = d.items[1];
+        document.getElementById('img3').innerText = d.items[2];
+        document.getElementById('img4').innerText = d.items[3];
+        
+        document.getElementById('answer').value = "";
+        document.getElementById('message').innerText = "";
+        document.getElementById('hintBox').style.display = 'none';
+        document.getElementById('btnHint').style.display = 'block';
+    }
+
+    function showHint() {
+        const d = quizData[current];
+        const hintBox = document.getElementById('hintBox');
+        hintBox.innerText = `💡 Petunjuk: ${d.hint}`;
+        hintBox.style.display = 'block';
+        document.getElementById('btnHint').style.display = 'none';
+    }
+
+    function checkAnswer() {
+        const val = document.getElementById('answer').value.trim().toUpperCase();
+        if (val === quizData[current].ans) {
+            document.getElementById('message').innerText = "Betul! Hebat sekali 🎉";
+            document.getElementById('message').style.color = "#2a9d8f";
+            setTimeout(() => {
+                current++;
+                if (current < quizData.length) {
+                    loadLevel();
+                } else {
+                    document.querySelector('.container').innerHTML = `
+                        <div class="title">🏆 MASTER SEJATI!</div>
+                        <p style="margin: 20px 0; font-size: 1.1rem;">Luar biasa! Anda berhasil menaklukkan 100 level gabungan gambar, angka, dan huruf.</p>
+                        <button class="btn-primary" onclick="location.reload()">MAIN LAGI</button>
+                    `;
+                }
+            }, 1200);
+        } else {
+            document.getElementById('message').innerText = "Kurang tepat, asah lagi logikanya! 🤔";
+            document.getElementById('message').style.color = "#e76f51";
+        }
+    }
+</script>
+
+</body>
+</html>
